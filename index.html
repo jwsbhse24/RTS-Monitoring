@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTSMS Performance Monitoring 2025 | Jetama Water</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0a1628;--accent:#00c4ff;--green:#00e096;--amber:#ffb300;--red:#ff4444;--purple:#7c6fff;--surface:#111e35;--card:#162340;--border:#1f3254;--text:#e8edf5;--muted:#7a90b8;--white:#ffffff;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a1628,#0d2244 60%,#1a3a6b);padding:24px;}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 32px;width:100%;max-width:440px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.5);}
+.login-logo{font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:8px;}
+.login-title{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--white);line-height:1.2;margin-bottom:5px;}
+.login-sub{font-size:0.76rem;color:var(--muted);margin-bottom:28px;}
+.login-label{display:block;text-align:left;font-size:0.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px;}
+.login-select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:10px;font-size:0.86rem;font-family:'DM Sans',sans-serif;margin-bottom:20px;appearance:none;cursor:pointer;}
+.login-select:focus{outline:none;border-color:var(--accent);}
+.login-btn{width:100%;background:var(--accent);color:var(--navy);border:none;padding:13px;border-radius:10px;font-family:'Syne',sans-serif;font-size:0.86rem;font-weight:700;cursor:pointer;transition:opacity 0.2s;}
+.login-btn:hover{opacity:0.88;}
+.login-divider{border:none;border-top:1px solid var(--border);margin:22px 0 16px;}
+.admin-link{font-size:0.74rem;color:var(--muted);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'DM Sans',sans-serif;}
+.admin-link:hover{color:var(--accent);}
+.sync-status{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:12px;font-size:0.7rem;}
+.sync-dot{width:7px;height:7px;border-radius:50%;}
+.sync-dot.connected{background:var(--green);}
+.sync-dot.local{background:var(--amber);}
+.sync-dot.checking{background:var(--muted);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+header{background:linear-gradient(135deg,#0a1628,#1a3a6b);border-bottom:2px solid var(--accent);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px;}
+.header-left h1{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--white);}
+.header-left p{font-size:0.68rem;color:var(--accent);margin-top:1px;letter-spacing:0.8px;text-transform:uppercase;}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.doc-badge{background:rgba(0,196,255,0.12);border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:6px;font-size:0.68rem;font-weight:600;}
+.dept-pill{background:var(--accent);color:var(--navy);padding:4px 12px;border-radius:20px;font-size:0.74rem;font-weight:700;}
+.logout-btn{background:transparent;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-size:0.68rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.logout-btn:hover{border-color:var(--red);color:var(--red);}
+.cloud-badge{display:flex;align-items:center;gap:5px;font-size:0.68rem;padding:4px 9px;border-radius:6px;}
+.cloud-badge.connected{background:rgba(0,224,150,0.12);color:var(--green);border:1px solid rgba(0,224,150,0.25);}
+.cloud-badge.local{background:rgba(255,179,0,0.12);color:var(--amber);border:1px solid rgba(255,179,0,0.25);}
+main{padding:20px 24px;max-width:1700px;margin:0 auto;}
+.view-toggle{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+.view-label{font-size:0.74rem;color:var(--muted);font-weight:500;}
+.view-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:5px 14px;border-radius:20px;font-size:0.73rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.view-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,196,255,0.08);}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 10px;text-align:center;position:relative;overflow:hidden;transition:transform 0.2s;}
+.stat-card:hover{transform:translateY(-2px);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.total::before{background:var(--accent);}
+.stat-card.on-track::before{background:var(--green);}
+.stat-card.delayed::before{background:var(--amber);}
+.stat-card.completed::before{background:var(--purple);}
+.stat-card.not-started::before{background:var(--muted);}
+.stat-number{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;line-height:1;margin-bottom:5px;}
+.stat-card.total .stat-number{color:var(--accent);}
+.stat-card.on-track .stat-number{color:var(--green);}
+.stat-card.delayed .stat-number{color:var(--amber);}
+.stat-card.completed .stat-number{color:var(--purple);}
+.stat-card.not-started .stat-number{color:var(--muted);}
+.stat-label{font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;font-weight:500;}
+.overall-progress{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:18px;}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+.progress-header span{font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:600;}
+.progress-pct{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:var(--accent);}
+.progress-bar-bg{background:var(--border);border-radius:100px;height:10px;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width 0.8s ease;}
+.dept-summary{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:18px;}
+.dept-summary-header{padding:12px 18px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:0.82rem;font-weight:700;}
+.dept-table{width:100%;border-collapse:collapse;}
+.dept-table th{padding:8px 13px;text-align:left;font-size:0.64rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid var(--border);}
+.dept-table td{padding:8px 13px;font-size:0.76rem;border-bottom:1px solid rgba(31,50,84,0.5);}
+.dept-table tr:last-child td{border-bottom:none;}
+.dept-table tr:hover td{background:rgba(0,196,255,0.025);}
+.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filter-label{font-size:0.74rem;color:var(--muted);font-weight:500;}
+.filter-btn{background:var(--card);border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:20px;font-size:0.71rem;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.filter-btn:hover,.filter-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(0,196,255,0.08);}
+.obj-filter{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.obj-filter-label{font-size:0.74rem;color:var(--muted);font-weight:500;}
+.obj-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:14px;font-size:0.68rem;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.obj-btn:hover,.obj-btn.active{border-color:var(--purple);color:var(--purple);background:rgba(124,111,255,0.08);}
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.table-header-bar{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.table-title{font-family:'Syne',sans-serif;font-size:0.86rem;font-weight:700;}
+.btn-group{display:flex;gap:7px;}
+.export-btn{background:rgba(0,196,255,0.1);border:1px solid var(--accent);color:var(--accent);padding:5px 13px;border-radius:8px;font-size:0.71rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.export-btn:hover{background:var(--accent);color:var(--navy);}
+.refresh-btn{background:rgba(0,224,150,0.1);border:1px solid var(--green);color:var(--green);padding:5px 13px;border-radius:8px;font-size:0.71rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.refresh-btn:hover{background:var(--green);color:var(--navy);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:rgba(0,196,255,0.04);}
+th{padding:10px 10px;text-align:left;font-size:0.63rem;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.7px;border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 10px;font-size:0.76rem;border-bottom:1px solid rgba(31,50,84,0.5);vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+tr.hidden-row{display:none;}
+tbody tr:hover{background:rgba(0,196,255,0.02);}
+.obj-no{font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:1rem;text-align:center;}
+.obj-name{font-weight:600;color:var(--text);font-size:0.78rem;margin-bottom:2px;}
+.action-text{color:var(--muted);font-size:0.71rem;line-height:1.5;}
+.vehicle-badge{background:rgba(124,111,255,0.12);border:1px solid rgba(124,111,255,0.25);color:var(--purple);padding:1px 6px;border-radius:4px;font-size:0.64rem;font-weight:600;font-family:'Syne',sans-serif;display:inline-block;margin-top:3px;}
+.person-badge{background:rgba(0,196,255,0.1);border:1px solid rgba(0,196,255,0.2);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:500;display:inline-block;}
+.timeline-text{color:var(--muted);font-size:0.7rem;}
+.target-text{font-family:'Syne',sans-serif;font-weight:700;color:var(--text);font-size:0.82rem;}
+.target-sub{font-size:0.64rem;color:var(--muted);margin-top:1px;}
+.dept-tag{display:inline-block;font-size:0.6rem;font-weight:600;padding:2px 5px;border-radius:4px;margin-top:2px;}
+.d-SHE{background:rgba(0,196,255,0.12);color:var(--accent);border:1px solid rgba(0,196,255,0.2);}
+.d-Admin{background:rgba(124,111,255,0.12);color:var(--purple);border:1px solid rgba(124,111,255,0.2);}
+.d-Electrical{background:rgba(255,179,0,0.12);color:var(--amber);border:1px solid rgba(255,179,0,0.2);}
+.d-Mechanical{background:rgba(0,224,150,0.12);color:var(--green);border:1px solid rgba(0,224,150,0.2);}
+.d-Instrumentation{background:rgba(255,68,68,0.1);color:#ff9999;border:1px solid rgba(255,68,68,0.2);}
+.d-Store{background:rgba(255,196,0,0.1);color:#ffd740;border:1px solid rgba(255,196,0,0.2);}
+.d-Lab{background:rgba(0,196,255,0.08);color:#60d0ff;border:1px solid rgba(0,196,255,0.15);}
+.d-Operation{background:rgba(200,100,255,0.1);color:#dd88ff;border:1px solid rgba(200,100,255,0.2);}
+.d-Maintenance{background:rgba(255,140,0,0.1);color:#ffaa40;border:1px solid rgba(255,140,0,0.2);}
+.d-Environment{background:rgba(0,200,100,0.1);color:#40dd88;border:1px solid rgba(0,200,100,0.2);}
+.d-Steering{background:rgba(180,180,255,0.1);color:#aaaaff;border:1px solid rgba(180,180,255,0.2);}
+.d-All{background:rgba(122,144,184,0.1);color:var(--muted);border:1px solid rgba(122,144,184,0.2);}
+.row-locked td input,.row-locked td textarea,.row-locked td .upload-btn{opacity:0.3;pointer-events:none;}
+.actual-wrap{display:flex;flex-direction:column;gap:4px;min-width:100px;}
+.actual-label{font-size:0.62rem;color:var(--muted);font-weight:500;}
+.actual-input-row{display:flex;align-items:center;gap:5px;}
+.actual-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 7px;border-radius:6px;font-size:0.9rem;font-family:'Syne',sans-serif;font-weight:700;width:50px;text-align:center;}
+.actual-input:focus{outline:none;border-color:var(--accent);}
+.actual-of{font-size:0.7rem;color:var(--muted);}
+.actual-target{font-family:'Syne',sans-serif;font-weight:800;color:var(--accent);font-size:0.88rem;}
+.saving-ind{font-size:0.6rem;color:var(--muted);margin-top:2px;display:none;}
+.saving-ind.show{display:block;}
+.prog-wrap{display:flex;flex-direction:column;gap:3px;min-width:100px;}
+.prog-bar-bg{background:var(--border);border-radius:100px;height:6px;overflow:hidden;}
+.prog-bar-fill{height:100%;border-radius:100px;transition:width 0.4s;}
+.prog-bar-fill.green{background:var(--green);}
+.prog-bar-fill.amber{background:var(--amber);}
+.prog-bar-fill.red{background:var(--red);}
+.prog-bar-fill.grey{background:var(--muted);}
+.prog-pct{font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;}
+.prog-pct.green{color:var(--green);}
+.prog-pct.amber{color:var(--amber);}
+.prog-pct.red{color:var(--red);}
+.prog-pct.grey{color:var(--muted);}
+.prog-sched{font-size:0.62rem;margin-top:1px;}
+.prog-sched.ahead{color:var(--green);}
+.prog-sched.behind{color:var(--amber);}
+.prog-sched.critical{color:var(--red);}
+.prog-sched.on{color:var(--accent);}
+.rag-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:0.68rem;font-weight:700;white-space:nowrap;}
+.rag-badge.green{background:rgba(0,224,150,0.15);color:var(--green);border:1px solid rgba(0,224,150,0.3);}
+.rag-badge.amber{background:rgba(255,179,0,0.15);color:var(--amber);border:1px solid rgba(255,179,0,0.3);}
+.rag-badge.red{background:rgba(255,68,68,0.15);color:var(--red);border:1px solid rgba(255,68,68,0.3);}
+.rag-badge.grey{background:rgba(122,144,184,0.15);color:var(--muted);border:1px solid rgba(122,144,184,0.3);}
+.rag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.rag-dot.green{background:var(--green);}
+.rag-dot.amber{background:var(--amber);}
+.rag-dot.red{background:var(--red);}
+.rag-dot.grey{background:var(--muted);}
+.upload-wrap{display:flex;flex-direction:column;gap:3px;min-width:130px;}
+.upload-btn{background:var(--surface);border:1px dashed var(--border);color:var(--muted);padding:5px 9px;border-radius:6px;font-size:0.68rem;cursor:pointer;text-align:center;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+.upload-btn:hover{border-color:var(--accent);color:var(--accent);}
+.upload-input{display:none;}
+.uploaded-file{font-size:0.64rem;color:var(--green);word-break:break-all;line-height:1.4;}
+.uploaded-file a{color:var(--green);text-decoration:underline;cursor:pointer;}
+.remove-file{color:var(--red);cursor:pointer;margin-left:3px;font-size:0.68rem;}
+.submitter-tag{font-size:0.6rem;color:var(--muted);font-style:italic;margin-top:2px;}
+.notes-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:5px 7px;border-radius:6px;font-size:0.71rem;width:100%;min-width:110px;font-family:'DM Sans',sans-serif;resize:vertical;min-height:36px;}
+.notes-input:focus{outline:none;border-color:var(--accent);}
+.notes-input::placeholder{color:var(--muted);}
+.save-toast{position:fixed;bottom:20px;right:20px;padding:9px 16px;border-radius:8px;font-weight:700;font-size:0.76rem;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;z-index:999;}
+.save-toast.ok{background:var(--green);color:var(--navy);}
+.save-toast.err{background:var(--amber);color:var(--navy);}
+.save-toast.show{opacity:1;transform:translateY(0);}
+.last-updated{text-align:right;font-size:0.66rem;color:var(--muted);margin-top:10px;}
+#app-screen{display:none;}
+@media(max-width:768px){main{padding:10px;}header{padding:9px 12px;}.login-card{padding:26px 18px;}.summary-grid{grid-template-columns:repeat(3,1fr);}td,th{padding:7px 6px;font-size:0.68rem;}}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Jetama Water Sdn Bhd</div>
+    <div class="login-title">RTSMS Performance Monitoring</div>
+    <div class="login-sub">2025 &nbsp;|&nbsp; ISO 39001 &nbsp;|&nbsp; RTS-OB-01</div>
+    <label class="login-label">Select Your Department</label>
+    <select class="login-select" id="dept-select">
+      <option value="">-- Choose your department --</option>
+      <option value="SHE">SHE Department</option>
+      <option value="Admin">Admin Department</option>
+      <option value="Electrical">Electrical Department (SAB5623V)</option>
+      <option value="Mechanical">Mechanical Department (SY2651 / SAB759N)</option>
+      <option value="Instrumentation">Instrumentation Department (SYC5996)</option>
+      <option value="Store">Store Department (SAA8843Y)</option>
+      <option value="Lab">Lab Department (SYC6003 / SYC6005)</option>
+      <option value="Operation">Operation Department (SAB756N)</option>
+      <option value="Maintenance">Building, Ground and Maintenance</option>
+      <option value="Environment">Environment Department</option>
+      <option value="Steering">Steering Committee</option>
+    </select>
+    <button class="login-btn" onclick="login()">Enter Monitoring System</button>
+    <hr class="login-divider">
+    <button class="admin-link" onclick="promptAdminPin()">SHE Officer / Admin: Full consolidated view</button>
+    <div class="sync-status">
+      <span class="sync-dot checking" id="sync-dot-login"></span>
+      <span id="sync-text-login" style="color:var(--muted)">Checking connection...</span>
+    </div>
+  </div>
+</div>
+
+<div id="app-screen">
+<header>
+  <div class="header-left">
+    <h1>RTSMS Performance Monitoring System 2025</h1>
+    <p>Jetama Water Sdn Bhd &nbsp;|&nbsp; ISO 39001 &nbsp;|&nbsp; RTS-OB-01</p>
+  </div>
+  <div class="header-right">
+    <span class="doc-badge" id="today-date"></span>
+    <span class="cloud-badge" id="cloud-badge"><span>●</span><span id="cloud-text">Local</span></span>
+    <span class="dept-pill" id="header-dept">--</span>
+    <button class="logout-btn" onclick="logout()">Change Dept</button>
+  </div>
+</header>
+
+<main>
+  <div class="view-toggle" id="view-toggle" style="display:none">
+    <span class="view-label">View:</span>
+    <button class="view-btn" onclick="setView('my',this)">My Department</button>
+    <button class="view-btn active" onclick="setView('all',this)">All Departments</button>
+    <button class="view-btn" onclick="setView('summary',this)">Department Summary</button>
+  </div>
+
+  <div class="summary-grid">
+    <div class="stat-card total"><div class="stat-number" id="total-count">0</div><div class="stat-label">Total Actions</div></div>
+    <div class="stat-card on-track"><div class="stat-number" id="on-track-count">0</div><div class="stat-label">On Track</div></div>
+    <div class="stat-card delayed"><div class="stat-number" id="delayed-count">0</div><div class="stat-label">Delayed</div></div>
+    <div class="stat-card completed"><div class="stat-number" id="completed-count">0</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card not-started"><div class="stat-number" id="not-started-count">0</div><div class="stat-label">Not Started</div></div>
+  </div>
+
+  <div class="overall-progress">
+    <div class="progress-header"><span>Overall Programme Completion</span><span class="progress-pct" id="overall-pct">0%</span></div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="overall-bar" style="width:0%"></div></div>
+  </div>
+
+  <div class="dept-summary" id="dept-summary-section" style="display:none">
+    <div class="dept-summary-header">Department Submission Summary</div>
+    <div style="overflow-x:auto">
+      <table class="dept-table">
+        <thead><tr><th>Department</th><th>Actions</th><th>Submitted</th><th>On Track</th><th>Delayed</th><th>Completed</th><th>Avg Progress</th></tr></thead>
+        <tbody id="dept-summary-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="filters">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+    <button class="filter-btn" onclick="filterTable('On Track',this)">On Track</button>
+    <button class="filter-btn" onclick="filterTable('Delayed',this)">Delayed</button>
+    <button class="filter-btn" onclick="filterTable('Completed',this)">Completed</button>
+    <button class="filter-btn" onclick="filterTable('Not Started',this)">Not Started</button>
+  </div>
+
+  <div class="obj-filter" id="obj-filter">
+    <span class="obj-filter-label">Objective:</span>
+    <button class="obj-btn active" onclick="filterObj('all',this)">All</button>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header-bar">
+      <span class="table-title">Performance Monitoring Data Collection</span>
+      <div class="btn-group">
+        <button class="refresh-btn" onclick="loadFromSheets()">Refresh</button>
+        <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th style="width:32px">No.</th>
+          <th style="width:120px">Objective</th>
+          <th style="width:185px">Activity</th>
+          <th style="width:80px">Dept</th>
+          <th style="width:68px">Timeline</th>
+          <th style="width:75px">Target</th>
+          <th style="width:95px">Actual</th>
+          <th style="width:110px">Progress</th>
+          <th style="width:80px">RAG</th>
+          <th style="width:140px">Evidence / Doc</th>
+          <th style="width:135px">Notes</th>
+        </tr></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="last-updated" id="last-updated-text"></div>
+</main>
+</div>
+<div class="save-toast" id="toast"></div>
+
+<script>
+// ── FULL DATA FROM EXCEL ──
+const ROWS = [
+  { no:1, obj:"Awareness Campaign", actions:[
+    { text:"Training for pool car drivers", dept:"SHE", vehicle:"", tl:"Yearly", target:{n:1,unit:"training",period:"yearly"} },
+    { text:"RTS safety bulletins / flyers", dept:"SHE", vehicle:"", tl:"3-monthly", target:{n:4,unit:"bulletins",period:"yearly"} },
+    { text:"Safety Briefing - Electrical Department", dept:"Electrical", vehicle:"SAB5623V", tl:"3-monthly", target:{n:4,unit:"briefings",period:"yearly"} },
+    { text:"Safety Briefing - Mechanical Department", dept:"Mechanical", vehicle:"SY2651", tl:"3-monthly", target:{n:4,unit:"briefings",period:"yearly"} },
+    { text:"Safety Briefing - Instrument Department", dept:"Instrumentation", vehicle:"SYC5996", tl:"3-monthly", target:{n:4,unit:"briefings",period:"yearly"} },
+    { text:"Safety Briefing - Store Department", dept:"Store", vehicle:"SAA8843Y", tl:"3-monthly", target:{n:4,unit:"briefings",period:"yearly"} },
+    { text:"Safety Briefing - Lab Department", dept:"Lab", vehicle:"SYC6003/SYC6005", tl:"3-monthly", target:{n:4,unit:"briefings",period:"yearly"} },
+    { text:"Safety Briefing - Operation Department", dept:"Operation", vehicle:"SAB756N", tl:"3-monthly", target:{n:4,unit:"briefings",period:"yearly"} },
+  ]},
+  { no:2, obj:"Promoting Hazard Reporting", actions:[
+    { text:"Hazard reporting via inspection", dept:"All", vehicle:"", tl:"6-monthly", target:{n:3,unit:"hazards",period:"6-monthly"} },
+  ]},
+  { no:3, obj:"Safe Driving Practices", actions:[
+    { text:"Incident Notification", dept:"All", vehicle:"", tl:"3-monthly", target:{n:0,unit:"incidents",period:"3-monthly"} },
+    { text:"Traffic Summons Review - Operation (SAB756N)", dept:"Operation", vehicle:"SAB756N", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Traffic Summons Review - Electrical (SAB5623V)", dept:"Electrical", vehicle:"SAB5623V", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Traffic Summons Review - Mechanical (SY2651)", dept:"Mechanical", vehicle:"SY2651", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Traffic Summons Review - Store (SAA8843Y)", dept:"Store", vehicle:"SAA8843Y", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Traffic Summons Review - Lab (SYC6003)", dept:"Lab", vehicle:"SYC6003", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Traffic Summons Review - Lab (SYC6005)", dept:"Lab", vehicle:"SYC6005", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Traffic Summons Review - Instrument (SYC5996)", dept:"Instrumentation", vehicle:"SYC5996", tl:"Yearly", target:{n:0,unit:"summonses",period:"yearly"} },
+    { text:"Driver Behaviour - Operation (SAB756N)", dept:"Operation", vehicle:"SAB756N", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+    { text:"Driver Behaviour - Electrical (SAB5623V)", dept:"Electrical", vehicle:"SAB5623V", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+    { text:"Driver Behaviour - Mechanical (SY2651)", dept:"Mechanical", vehicle:"SY2651", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+    { text:"Driver Behaviour - Store (SAA8843Y)", dept:"Store", vehicle:"SAA8843Y", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+    { text:"Driver Behaviour - Lab (SYC6003)", dept:"Lab", vehicle:"SYC6003", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+    { text:"Driver Behaviour - Lab (SYC6005)", dept:"Lab", vehicle:"SYC6005", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+    { text:"Driver Behaviour - Instrument (SYC5996)", dept:"Instrumentation", vehicle:"SYC5996", tl:"Yearly", target:{n:0,unit:"violations",period:"yearly"} },
+  ]},
+  { no:4, obj:"Maintaining Vehicle Safety", actions:[
+    { text:"Vehicle Service Review - Operation (SAB756N)", dept:"Operation", vehicle:"SAB756N", tl:"3-monthly", target:{n:10,unit:"services",period:"yearly"} },
+    { text:"Vehicle Service Review - Electrical (SAB5623V)", dept:"Electrical", vehicle:"SAB5623V", tl:"3-monthly", target:{n:11,unit:"services",period:"yearly"} },
+    { text:"Vehicle Service Review - Mechanical (SY2651)", dept:"Mechanical", vehicle:"SY2651", tl:"3-monthly", target:{n:12,unit:"services",period:"yearly"} },
+    { text:"Vehicle Service Review - Store (SAA8843Y)", dept:"Store", vehicle:"SAA8843Y", tl:"3-monthly", target:{n:13,unit:"services",period:"yearly"} },
+    { text:"Vehicle Service Review - Lab (SYC6003)", dept:"Lab", vehicle:"SYC6003", tl:"3-monthly", target:{n:14,unit:"services",period:"yearly"} },
+    { text:"Vehicle Service Review - Instrument (SYC5996)", dept:"Instrumentation", vehicle:"SYC5996", tl:"3-monthly", target:{n:15,unit:"services",period:"yearly"} },
+    { text:"Breakdown Report (max 2 breakdowns)", dept:"All", vehicle:"", tl:"3-monthly", target:{n:2,unit:"max",period:"3-monthly"} },
+    { text:"Pre-departure Checklist - Electrical Dept", dept:"Electrical", vehicle:"SAB5623V", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+    { text:"Pre-departure Checklist - Mechanical Dept", dept:"Mechanical", vehicle:"SY2651", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+    { text:"Pre-departure Checklist - Maintenance Dept", dept:"Maintenance", vehicle:"", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+    { text:"Pre-departure Checklist - Store Dept", dept:"Store", vehicle:"SAA8843Y", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+    { text:"Pre-departure Checklist - Lab Dept", dept:"Lab", vehicle:"SYC6003/SYC6005", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+    { text:"Pre-departure Checklist - Instrument Dept", dept:"Instrumentation", vehicle:"SYC5996", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+    { text:"Pre-departure Checklist - Operation Dept", dept:"Operation", vehicle:"SAB756N", tl:"Daily", target:{n:132,unit:"submissions",period:"yearly"} },
+  ]},
+  { no:5, obj:"Maintaining Road Safety", actions:[
+    { text:"PPM Review (at least 2 PPM)", dept:"Maintenance", vehicle:"", tl:"6-monthly", target:{n:2,unit:"PPM",period:"yearly"} },
+  ]},
+  { no:6, obj:"Emergency Response", actions:[
+    { text:"Emergency Drill / Table Top Drill", dept:"Steering", vehicle:"", tl:"Yearly", target:{n:1,unit:"drill",period:"yearly"} },
+  ]},
+  { no:7, obj:"HIRARC Review", actions:[
+    { text:"HIRARC Record Review", dept:"SHE", vehicle:"", tl:"Yearly", target:{n:1,unit:"review",period:"yearly"} },
+  ]},
+  { no:8, obj:"Regulatory Compliance", actions:[
+    { text:"LORREC Review (min 2 reviews)", dept:"Steering", vehicle:"", tl:"6-monthly", target:{n:2,unit:"reviews",period:"yearly"} },
+  ]},
+  { no:9, obj:"Eco Driving Programme", actions:[
+    { text:"Eco Driving Awareness Training for pool car drivers", dept:"Environment", vehicle:"", tl:"Yearly", target:{n:1,unit:"training",period:"yearly"} },
+  ]},
+];
+
+const DEPT_LIST = ["SHE","Admin","Electrical","Mechanical","Instrumentation","Store","Lab","Operation","Maintenance","Environment","Steering"];
+const DEPT_LABEL = {SHE:"SHE",Admin:"Admin",Electrical:"Electrical",Mechanical:"Mechanical",Instrumentation:"Instrumentation",Store:"Store",Lab:"Lab",Operation:"Operation",Maintenance:"Maintenance",Environment:"Environment",Steering:"Steering Committee"};
+const DEPT_CLASS = {SHE:"d-SHE",Admin:"d-Admin",Electrical:"d-Electrical",Mechanical:"d-Mechanical",Instrumentation:"d-Instrumentation",Store:"d-Store",Lab:"d-Lab",Operation:"d-Operation",Maintenance:"d-Maintenance",Environment:"d-Environment",Steering:"d-Steering",All:"d-All"};
+
+const SCRIPT_URL = localStorage.getItem('rts_script_url') || 'https://script.google.com/macros/s/AKfycbyDXa_nqgWo1BSV4t-bZO-r2E0Y_VDrCENW0He1L4MebDoW6E3BVvwkv3i6ZJgOmD4/exec';
+
+let currentDept=null, isAdmin=false, currentView='my';
+let cloudData={};
+let activeObjFilter='all';
+const TODAY=new Date();
+
+function doy(d){return Math.floor((d-new Date(d.getFullYear(),0,1))/86400000)+1;}
+function diy(){return TODAY.getFullYear()%4===0?366:365;}
+function expRatio(p){
+  const d=doy(TODAY),t=diy();
+  if(p==='yearly') return d/t;
+  if(p==='6-monthly') return Math.min(1,(d%183)/183);
+  if(p==='3-monthly') return Math.min(1,(d%91)/91);
+  if(p==='daily') return 1;
+  return d/t;
+}
+function calcRAG(actual,target,period){
+  if(target.n===0){if(actual===''||actual===null) return 'grey'; return parseInt(actual)===0?'green':'red';}
+  if(actual===''||actual===null||actual===undefined) return 'grey';
+  const a=parseInt(actual)||0;
+  const exp=target.n*expRatio(period);
+  if(a>=target.n) return 'green';
+  if(a>=Math.ceil(exp)) return 'green';
+  if(a>=Math.floor(exp*0.7)) return 'amber';
+  return 'red';
+}
+function calcStatus(actual,target,period){
+  if(actual===''||actual===null||actual===undefined) return 'Not Started';
+  const a=parseInt(actual)||0;
+  if(a===0&&target.n!==0) return 'Not Started';
+  const rag=calcRAG(actual,target,period);
+  if(a>=target.n) return 'Completed';
+  return rag==='red'?'Delayed':'On Track';
+}
+function schedText(actual,target,period){
+  if(target.n===0||actual===''||actual===null) return null;
+  const a=parseInt(actual)||0;
+  const exp=target.n*expRatio(period);
+  const diff=a-Math.round(exp*10)/10;
+  if(a>=target.n) return {text:'Target met',cls:'ahead'};
+  if(diff>0) return {text:`+${diff.toFixed(1)} ahead`,cls:'ahead'};
+  if(diff===0) return {text:'On schedule',cls:'on'};
+  if(diff>=-1) return {text:`${Math.abs(diff).toFixed(1)} behind`,cls:'behind'};
+  return {text:`${Math.abs(diff).toFixed(1)} behind`,cls:'critical'};
+}
+function calcPct(actual,target){
+  if(target.n===0) return (actual!==''&&parseInt(actual)===0)?100:0;
+  return actual!==''?Math.min(100,Math.round((parseInt(actual)||0)/target.n*100)):0;
+}
+
+function loadLocal(){try{return JSON.parse(localStorage.getItem('rts_excel_v1')||'{}');}catch(e){return{};}}
+function saveLocal(d){localStorage.setItem('rts_excel_v1',JSON.stringify(d));}
+function gk(ri,ai,f){return `r${ri}_a${ai}_${f}`;}
+function getMerged(){return Object.assign({},cloudData,loadLocal());}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`save-toast ${type} show`;setTimeout(()=>t.classList.remove('show'),2500);}
+
+async function loadFromSheets(){
+  if(!SCRIPT_URL){updateSyncUI(false);return;}
+  try{
+    const res=await fetch(SCRIPT_URL,{method:'GET',mode:'cors'});
+    const json=await res.json();
+    if(json.status==='ok'){
+      cloudData={};
+      Object.entries(json.data).forEach(([key,val])=>{
+        cloudData[key+'_actual']=val.actual;
+        cloudData[key+'_note']=val.notes;
+        cloudData[key+'_docname']=val.docName;
+        cloudData[key+'_sub']=val.sub;
+      });
+      updateSyncUI(true);
+      renderTable();
+    }
+  }catch(e){updateSyncUI(false);}
+}
+
+async function saveToSheets(ri,ai,action,actual,notes,docName,sub,rag,status,pct){
+  if(!SCRIPT_URL) return;
+  const payload={action:'save',rowKey:`r${ri}_a${ai}`,objNo:ROWS[ri].no,obj:ROWS[ri].obj,action:action.text,dept:action.dept,pic:action.dept,timeline:action.tl,targetN:action.target.n,targetUnit:action.target.unit,actual,pct,rag,status,docName:docName||'',notes:notes||'',submittedBy:sub};
+  try{await fetch(SCRIPT_URL,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});showToast('Saved to Google Sheets','ok');}
+  catch(e){showToast('Saved locally','err');}
+}
+
+function updateSyncUI(connected){
+  const dot=document.getElementById('sync-dot-login');
+  const text=document.getElementById('sync-text-login');
+  const badge=document.getElementById('cloud-badge');
+  const btext=document.getElementById('cloud-text');
+  if(connected){if(dot){dot.className='sync-dot connected';}if(text)text.textContent='Connected to Google Sheets';if(badge)badge.className='cloud-badge connected';if(btext)btext.textContent='Google Sheets';}
+  else{if(dot){dot.className='sync-dot local';}if(text)text.textContent='Local storage only';if(badge)badge.className='cloud-badge local';if(btext)btext.textContent='Local Only';}
+}
+
+function login(){const v=document.getElementById('dept-select').value;if(!v){alert('Please select your department.');return;}isAdmin=false;currentDept=v;startApp();}
+async function hashPin(pin){
+  const msgBuffer=new TextEncoder().encode(pin);
+  const hashBuffer=await crypto.subtle.digest('SHA-256',msgBuffer);
+  const hashArray=Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function promptAdminPin(){
+  const pin=prompt('Enter admin PIN:');
+  if(!pin) return;
+  const hashed=await hashPin(pin);
+  const correct='69fda151db3a7e80999d996011ba10ca1744049448bdc9d6bf379b5af17d170c';
+  if(hashed===correct){isAdmin=true;currentDept='SHE';startApp();}
+  else{alert('Incorrect PIN. Access denied.');}
+}
+function adminLogin(){isAdmin=true;currentDept='SHE';startApp();}
+function startApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app-screen').style.display='block';
+  document.getElementById('header-dept').textContent=isAdmin?'SHE / Admin (All Depts)':(DEPT_LABEL[currentDept]||currentDept)+' Dept';
+  document.getElementById('today-date').textContent=TODAY.toLocaleDateString('en-MY',{day:'2-digit',month:'short',year:'numeric'});
+  if(isAdmin){document.getElementById('view-toggle').style.display='flex';currentView='all';}
+  else{document.getElementById('view-toggle').style.display='none';currentView='my';}
+  buildObjFilter();
+  loadFromSheets().then(()=>renderTable());
+  const ts=localStorage.getItem('rts_ts');
+  if(ts)document.getElementById('last-updated-text').textContent='Last updated: '+ts;
+}
+function logout(){document.getElementById('login-screen').style.display='flex';document.getElementById('app-screen').style.display='none';currentDept=null;isAdmin=false;currentView='my';}
+function setView(v,btn){currentView=v;document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');const dss=document.getElementById('dept-summary-section');if(v==='summary'){dss.style.display='block';renderDeptSummary();}else dss.style.display='none';renderTable();}
+
+function buildObjFilter(){
+  const wrap=document.getElementById('obj-filter');
+  wrap.innerHTML='<span class="obj-filter-label">Objective:</span><button class="obj-btn active" onclick="filterObj(\'all\',this)">All</button>';
+  ROWS.forEach(row=>{
+    const btn=document.createElement('button');
+    btn.className='obj-btn';
+    btn.textContent=row.no+'. '+row.obj;
+    btn.onclick=function(){filterObj(row.no,this);};
+    wrap.appendChild(btn);
+  });
+}
+
+function filterObj(no,btn){
+  activeObjFilter=no;
+  document.querySelectorAll('.obj-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTable();
+}
+
+function renderTable(){
+  const data=getMerged();
+  const tbody=document.getElementById('table-body');
+  tbody.innerHTML='';
+  let collected=[];
+  ROWS.forEach((row,ri)=>{
+    if(activeObjFilter!=='all'&&row.no!==activeObjFilter) return;
+    row.actions.forEach((action,ai)=>{
+      const myRow=action.dept===currentDept||action.dept==='All'||isAdmin;
+      if(currentView==='my'&&!myRow) return;
+      const canEdit=myRow&&(action.dept===currentDept||action.dept==='All'||isAdmin);
+      const actual=data[gk(ri,ai,'actual')]??'';
+      const note=data[gk(ri,ai,'note')]||'';
+      const docName=data[gk(ri,ai,'docname')]||'';
+      const sub=data[gk(ri,ai,'sub')]||'';
+      const rag=calcRAG(actual,action.target,action.target.period);
+      const status=calcStatus(actual,action.target,action.target.period);
+      const pct=calcPct(actual,action.target);
+      const sched=schedText(actual,action.target,action.target.period);
+      collected.push({status,pct});
+      const tr=document.createElement('tr');
+      tr.dataset.status=status;
+      tr.dataset.objno=row.no;
+      if(!canEdit) tr.classList.add('row-locked');
+      const dc=DEPT_CLASS[action.dept]||'d-All';
+      const showDept=(currentView!=='my')?`<span class="dept-tag ${dc}">${action.dept}</span>`:'';
+      const vBadge=action.vehicle?`<span class="vehicle-badge">${action.vehicle}</span>`:'';
+      const tgtDisp=action.target.n===0?`<div class="target-text">Zero</div><div class="target-sub">${action.target.unit}</div>`:`<div class="target-text">${action.target.n}</div><div class="target-sub">${action.target.unit}</div>`;
+      const schedHTML=sched?`<div class="prog-sched ${sched.cls}">${sched.text}</div>`:'';
+      const docHTML=docName?`<div class="uploaded-file"><a onclick="viewDoc(${ri},${ai})">${docName}</a><span class="remove-file" onclick="removeDoc(${ri},${ai})">✕</span></div>`:`<label class="upload-btn" for="file-${ri}-${ai}">+ Upload evidence</label>`;
+      tr.innerHTML=`
+        <td style="text-align:center"><div class="obj-no">${row.no}</div></td>
+        <td><div class="obj-name">${row.obj}</div>${showDept}</td>
+        <td><div class="action-text">${action.text}</div>${vBadge}</td>
+        <td><span class="person-badge">${action.dept==='All'?'All':DEPT_LABEL[action.dept]||action.dept}</span></td>
+        <td><span class="timeline-text">${action.tl}</span></td>
+        <td>${tgtDisp}</td>
+        <td>
+          <div class="actual-wrap">
+            <div class="actual-label">Actual count</div>
+            <div class="actual-input-row">
+              <input type="number" min="0" class="actual-input" value="${actual}" placeholder="0"
+                onchange="updateActual(${ri},${ai},this.value)" ${!canEdit?'disabled':''}>
+              <span class="actual-of">of</span>
+              <span class="actual-target">${action.target.n===0?'Zero':action.target.n}</span>
+            </div>
+            <div class="saving-ind" id="saving-${ri}-${ai}">Saving...</div>
+          </div>
+        </td>
+        <td>
+          <div class="prog-wrap">
+            <div class="prog-pct ${rag}">${pct}%</div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill ${rag}" style="width:${pct}%"></div></div>
+            ${schedHTML}
+          </div>
+        </td>
+        <td><span class="rag-badge ${rag}"><span class="rag-dot ${rag}"></span>${rag==='green'?'Green':rag==='amber'?'Amber':rag==='red'?'Red':'Not Set'}</span></td>
+        <td>
+          <div class="upload-wrap">
+            ${docHTML}
+            <input type="file" class="upload-input" id="file-${ri}-${ai}" onchange="handleUpload(${ri},${ai},this)" ${!canEdit?'disabled':''}>
+            ${sub?`<div class="submitter-tag">by ${sub}</div>`:''}
+          </div>
+        </td>
+        <td><textarea class="notes-input" placeholder="Notes..." onchange="updateField(${ri},${ai},'note',this.value)" ${!canEdit?'disabled':''}>${note}</textarea></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+  updateSummary(collected);
+}
+
+async function updateActual(ri,ai,value){
+  const ind=document.getElementById(`saving-${ri}-${ai}`);
+  if(ind) ind.classList.add('show');
+  const local=loadLocal();
+  local[gk(ri,ai,'actual')]=value;
+  local[gk(ri,ai,'sub')]=currentDept;
+  const ts=new Date().toLocaleString('en-MY');
+  localStorage.setItem('rts_ts',ts);
+  saveLocal(local);
+  const action=ROWS[ri].actions[ai];
+  const rag=calcRAG(value,action.target,action.target.period);
+  const status=calcStatus(value,action.target,action.target.period);
+  const pct=calcPct(value,action.target);
+  const docName=local[gk(ri,ai,'docname')]||cloudData[gk(ri,ai,'docname')]||'';
+  const notes=local[gk(ri,ai,'note')]||cloudData[gk(ri,ai,'note')]||'';
+  await saveToSheets(ri,ai,action,value,notes,docName,currentDept,rag,status,pct+'%');
+  if(ind) ind.classList.remove('show');
+  document.getElementById('last-updated-text').textContent='Last updated: '+ts;
+  renderTable();
+}
+function updateField(ri,ai,field,value){
+  const local=loadLocal();
+  local[gk(ri,ai,field)]=value;
+  local[gk(ri,ai,'sub')]=currentDept;
+  saveLocal(local);
+  const action=ROWS[ri].actions[ai];
+  const actual=local[gk(ri,ai,'actual')]??cloudData[gk(ri,ai,'actual')]??'';
+  const rag=calcRAG(actual,action.target,action.target.period);
+  const status=calcStatus(actual,action.target,action.target.period);
+  const pct=calcPct(actual,action.target);
+  const docName=local[gk(ri,ai,'docname')]||cloudData[gk(ri,ai,'docname')]||'';
+  const notes=local[gk(ri,ai,'note')]||cloudData[gk(ri,ai,'note')]||'';
+  saveToSheets(ri,ai,action,actual,notes,docName,currentDept,rag,status,pct+'%');
+}
+function handleUpload(ri,ai,input){
+  if(!input.files||!input.files[0]) return;
+  const file=input.files[0];
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const local=loadLocal();
+    local[gk(ri,ai,'docname')]=file.name;
+    local[gk(ri,ai,'docdata')]=e.target.result;
+    local[gk(ri,ai,'sub')]=currentDept;
+    saveLocal(local);
+    const action=ROWS[ri].actions[ai];
+    const actual=local[gk(ri,ai,'actual')]??'';
+    const rag=calcRAG(actual,action.target,action.target.period);
+    const status=calcStatus(actual,action.target,action.target.period);
+    const pct=calcPct(actual,action.target);
+    const notes=local[gk(ri,ai,'note')]||'';
+    saveToSheets(ri,ai,action,actual,notes,file.name,currentDept,rag,status,pct+'%');
+    renderTable();
+  };
+  reader.readAsDataURL(file);
+}
+function viewDoc(ri,ai){const local=loadLocal();const d=local[gk(ri,ai,'docdata')];const n=local[gk(ri,ai,'docname')]||'file';if(!d){alert('File stored in Google Sheets. Open the Sheet to access.');return;}const a=document.createElement('a');a.href=d;a.download=n;a.click();}
+function removeDoc(ri,ai){if(!confirm('Remove this document?'))return;const local=loadLocal();delete local[gk(ri,ai,'docname')];delete local[gk(ri,ai,'docdata')];saveLocal(local);renderTable();}
+
+function updateSummary(rows){
+  let on=0,del=0,comp=0,ns=0,pSum=0;
+  const total=rows.length||1;
+  rows.forEach(r=>{if(r.status==='On Track')on++;else if(r.status==='Delayed')del++;else if(r.status==='Completed')comp++;else ns++;pSum+=r.pct;});
+  document.getElementById('total-count').textContent=total;
+  document.getElementById('on-track-count').textContent=on;
+  document.getElementById('delayed-count').textContent=del;
+  document.getElementById('completed-count').textContent=comp;
+  document.getElementById('not-started-count').textContent=ns;
+  const avg=total>0?Math.round(pSum/total):0;
+  document.getElementById('overall-pct').textContent=avg+'%';
+  document.getElementById('overall-bar').style.width=avg+'%';
+}
+function renderDeptSummary(){
+  const data=getMerged();
+  const tbody=document.getElementById('dept-summary-body');
+  tbody.innerHTML='';
+  DEPT_LIST.forEach(dept=>{
+    let owned=0,submitted=0,on=0,del=0,comp=0,pSum=0;
+    ROWS.forEach((row,ri)=>{row.actions.forEach((action,ai)=>{if(action.dept!==dept&&action.dept!=='All')return;owned++;const actual=data[gk(ri,ai,'actual')]??'';const sub=data[gk(ri,ai,'sub')]||'';if(sub||actual!=='')submitted++;const status=calcStatus(actual,action.target,action.target.period);const pct=calcPct(actual,action.target);if(status==='On Track')on++;else if(status==='Delayed')del++;else if(status==='Completed')comp++;pSum+=pct;});});
+    const avg=owned>0?Math.round(pSum/owned):0;
+    const dc=DEPT_CLASS[dept]||'d-All';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="dept-tag ${dc}">${DEPT_LABEL[dept]||dept}</span></td><td style="font-weight:700;color:var(--accent)">${owned}</td><td>${submitted}/${owned}</td><td style="color:var(--green);font-weight:600">${on}</td><td style="color:var(--amber);font-weight:600">${del}</td><td style="color:var(--purple);font-weight:600">${comp}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="flex:1;height:5px;background:var(--border);border-radius:100px;overflow:hidden;min-width:45px"><div style="height:100%;width:${avg}%;background:var(--accent);border-radius:100px"></div></div><span style="font-weight:700;color:var(--accent);font-family:'Syne',sans-serif;font-size:0.78rem">${avg}%</span></div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+function filterTable(status,btn){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('#table-body tr').forEach(tr=>{if(status==='all'||tr.dataset.status===status)tr.classList.remove('hidden-row');else tr.classList.add('hidden-row');});}
+function exportCSV(){
+  const data=getMerged();
+  let csv='No,Objective,Activity,Vehicle,Dept,Timeline,Target,Target Unit,Actual,% Complete,RAG,Status,Evidence Doc,Notes,Submitted By\n';
+  ROWS.forEach((row,ri)=>{row.actions.forEach((action,ai)=>{const actual=data[gk(ri,ai,'actual')]??'';const note=(data[gk(ri,ai,'note')]||'').replace(/,/g,'；').replace(/\n/g,' ');const docname=data[gk(ri,ai,'docname')]||'';const sub=data[gk(ri,ai,'sub')]||'';const rag=calcRAG(actual,action.target,action.target.period);const status=calcStatus(actual,action.target,action.target.period);const pct=calcPct(actual,action.target);csv+=`${row.no},"${row.obj}","${action.text}","${action.vehicle}","${action.dept}","${action.tl}","${action.target.n}","${action.target.unit}","${actual}","${pct}%","${rag}","${status}","${docname}","${note}","${sub}"\n`;});});
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`RTSMS-Monitoring-${TODAY.toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+}
+window.onload=function(){if(SCRIPT_URL){loadFromSheets();}else{updateSyncUI(false);}};
+</script>
+</body>
+</html>
