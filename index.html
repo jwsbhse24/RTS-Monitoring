@@ -367,7 +367,9 @@ const DEPT_LIST = ["SHE","Admin","Electrical","Mechanical","Instrumentation","St
 const DEPT_LABEL = {SHE:"SHE",Admin:"Admin",Electrical:"Electrical",Mechanical:"Mechanical",Instrumentation:"Instrumentation",Store:"Store",Lab:"Lab",Operation:"Operation",Maintenance:"Maintenance",Environment:"Environment",Steering:"Steering Committee"};
 const DEPT_CLASS = {SHE:"d-SHE",Admin:"d-Admin",Electrical:"d-Electrical",Mechanical:"d-Mechanical",Instrumentation:"d-Instrumentation",Store:"d-Store",Lab:"d-Lab",Operation:"d-Operation",Maintenance:"d-Maintenance",Environment:"d-Environment",Steering:"d-Steering",All:"d-All"};
 
-const SCRIPT_URL = localStorage.getItem('rts_script_url') || 'https://script.google.com/macros/s/AKfycbxv__TXQQfmljtBZYj8jZ-B8DQHEVT3ULv0oOaGlSGFpEF-z2gvrbdVDQM_LrJjeeVf/exec';
+const SUPABASE_URL = 'https://aqrrbkuvshjxmiorkbn.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_QBJrAis0XrqH7EJ4efimBA_k2YrwWoQ';
+const SUPABASE_TABLE = 'rts_monitoring';
 
 let currentDept=null, isAdmin=false, currentView='my';
 let cloudData={};
@@ -424,30 +426,79 @@ function gk(ri,ai,f){return `r${ri}_a${ai}_${f}`;}
 function getMerged(){return Object.assign({},cloudData,loadLocal());}
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className=`save-toast ${type} show`;setTimeout(()=>t.classList.remove('show'),2500);}
 
+// ── SUPABASE HELPERS ──
+function sbHeaders(){
+  return {
+    'Content-Type':'application/json',
+    'apikey': SUPABASE_KEY,
+    'Authorization': 'Bearer '+SUPABASE_KEY
+  };
+}
+
 async function loadFromSheets(){
-  if(!SCRIPT_URL){updateSyncUI(false);return;}
   try{
-    const res=await fetch(SCRIPT_URL,{method:'GET',mode:'cors'});
-    const json=await res.json();
-    if(json.status==='ok'){
-      cloudData={};
-      Object.entries(json.data).forEach(([key,val])=>{
-        cloudData[key+'_actual']=val.actual;
-        cloudData[key+'_note']=val.notes;
-        cloudData[key+'_docname']=val.docName;
-        cloudData[key+'_sub']=val.sub;
-      });
-      updateSyncUI(true);
-      renderTable();
-    }
-  }catch(e){updateSyncUI(false);}
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}?select=*`, {
+      method:'GET',
+      headers: sbHeaders()
+    });
+    if(!res.ok) throw new Error('Supabase error '+res.status);
+    const rows = await res.json();
+    cloudData={};
+    rows.forEach(r=>{
+      const key = r.row_key;
+      if(!key) return;
+      cloudData[key+'_actual']  = r.actual   || '';
+      cloudData[key+'_note']    = r.notes    || '';
+      cloudData[key+'_docname'] = r.doc_name || '';
+      cloudData[key+'_sub']     = r.submitted_by || '';
+    });
+    updateSyncUI(true);
+    renderTable();
+  }catch(e){
+    console.error('Supabase load error:',e);
+    updateSyncUI(false);
+  }
 }
 
 async function saveToSheets(ri,ai,action,actual,notes,docName,sub,rag,status,pct){
-  if(!SCRIPT_URL) return;
-  const payload={action:'save',rowKey:`r${ri}_a${ai}`,objNo:ROWS[ri].no,obj:ROWS[ri].obj,action:action.text,dept:action.dept,pic:action.dept,timeline:action.tl,targetN:action.target.n,targetUnit:action.target.unit,actual,pct,rag,status,docName:docName||'',notes:notes||'',submittedBy:sub};
-  try{await fetch(SCRIPT_URL,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});showToast('Saved to Google Sheets','ok');}
-  catch(e){showToast('Saved locally','err');}
+  const rowKey = `r${ri}_a${ai}`;
+  const payload = {
+    row_key:      rowKey,
+    obj_no:       String(ROWS[ri].no),
+    objective:    ROWS[ri].obj,
+    activity:     action.text,
+    vehicle:      action.vehicle || '',
+    department:   action.dept,
+    actual:       String(actual),
+    pct:          String(pct),
+    rag:          rag,
+    status:       status,
+    doc_name:     docName || '',
+    notes:        notes   || '',
+    submitted_by: sub,
+    updated_at:   new Date().toLocaleString('en-MY')
+  };
+  try{
+    // Upsert: insert or update based on row_key
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`, {
+      method:'POST',
+      headers: {
+        ...sbHeaders(),
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(payload)
+    });
+    if(res.ok || res.status===201){
+      showToast('Saved to Supabase','ok');
+    } else {
+      const err = await res.text();
+      console.error('Supabase save error:',err);
+      showToast('Saved locally','err');
+    }
+  }catch(e){
+    console.error('Supabase save error:',e);
+    showToast('Saved locally','err');
+  }
 }
 
 function updateSyncUI(connected){
@@ -455,8 +506,17 @@ function updateSyncUI(connected){
   const text=document.getElementById('sync-text-login');
   const badge=document.getElementById('cloud-badge');
   const btext=document.getElementById('cloud-text');
-  if(connected){if(dot){dot.className='sync-dot connected';}if(text)text.textContent='Connected to Google Sheets';if(badge)badge.className='cloud-badge connected';if(btext)btext.textContent='Google Sheets';}
-  else{if(dot){dot.className='sync-dot local';}if(text)text.textContent='Local storage only';if(badge)badge.className='cloud-badge local';if(btext)btext.textContent='Local Only';}
+  if(connected){
+    if(dot){dot.className='sync-dot connected';}
+    if(text)text.textContent='Connected to Supabase';
+    if(badge)badge.className='cloud-badge connected';
+    if(btext)btext.textContent='Supabase';
+  }else{
+    if(dot){dot.className='sync-dot local';}
+    if(text)text.textContent='Local storage only';
+    if(badge)badge.className='cloud-badge local';
+    if(btext)btext.textContent='Local Only';
+  }
 }
 
 function login(){const v=document.getElementById('dept-select').value;if(!v){alert('Please select your department.');return;}isAdmin=false;currentDept=v;startApp();}
@@ -673,7 +733,7 @@ function exportCSV(){
   ROWS.forEach((row,ri)=>{row.actions.forEach((action,ai)=>{const actual=data[gk(ri,ai,'actual')]??'';const note=(data[gk(ri,ai,'note')]||'').replace(/,/g,'；').replace(/\n/g,' ');const docname=data[gk(ri,ai,'docname')]||'';const sub=data[gk(ri,ai,'sub')]||'';const rag=calcRAG(actual,action.target,action.target.period);const status=calcStatus(actual,action.target,action.target.period);const pct=calcPct(actual,action.target);csv+=`${row.no},"${row.obj}","${action.text}","${action.vehicle}","${action.dept}","${action.tl}","${action.target.n}","${action.target.unit}","${actual}","${pct}%","${rag}","${status}","${docname}","${note}","${sub}"\n`;});});
   const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`RTSMS-Monitoring-${TODAY.toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
 }
-window.onload=function(){if(SCRIPT_URL){loadFromSheets();}else{updateSyncUI(false);}};
+window.onload=function(){loadFromSheets();};
 </script>
 </body>
 </html>
